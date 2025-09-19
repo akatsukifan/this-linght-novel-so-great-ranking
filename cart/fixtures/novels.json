@@ -1,0 +1,67 @@
+[
+  {
+    "model": "cart.novel",
+    "pk": 1,
+    "fields": {
+      "name": "三体",
+      "author": "刘慈欣",
+      "publisher": "重庆出版社",
+      "rank": 1,
+      "price": 89.00,
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "cart.novel",
+    "pk": 2,
+    "fields": {
+      "name": "活着",
+      "author": "余华",
+      "publisher": "作家出版社",
+      "rank": 2,
+      "price": 45.00,
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "cart.novel",
+    "pk": 3,
+    "fields": {
+      "name": "围城",
+      "author": "钱钟书",
+      "publisher": "人民文学出版社",
+      "rank": 3,
+      "price": 58.00,
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "cart.novel",
+    "pk": 4,
+    "fields": {
+      "name": "百年孤独",
+      "author": "加西亚·马尔克斯",
+      "publisher": "南海出版公司",
+      "rank": 4,
+      "price": 69.00,
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "cart.novel",
+    "pk": 5,
+    "fields": {
+      "name": "红楼梦",
+      "author": "曹雪芹",
+      "publisher": "人民文学出版社",
+      "rank": 5,
+      "price": 98.00,
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  }
+]
