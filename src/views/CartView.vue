@@ -112,6 +112,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { getApiUrl, env } from '../config/env'
 
 // カートアイテムの型定義
 interface CartItem {
@@ -134,7 +135,8 @@ const fetchCartData = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch('http://localhost:8000/api/cart/', {
+    const cartUrl = getApiUrl(env.CART_URL)
+    const response = await fetch(cartUrl, {
       credentials: 'include' // セッションを保持するためにクレデンシャルを含める
     })
     if (!response.ok) {
@@ -178,7 +180,8 @@ const total = computed(() => {
 // 商品の数量を増やす
 const increaseQuantity = async (id: number) => {
   try {
-    const response = await fetch('http://localhost:8000/api/cart/update_item/', {
+    const updateItemUrl = getApiUrl(env.CART_UPDATE_ITEM_URL)
+    const response = await fetch(updateItemUrl, {
       method: 'PUT',
       credentials: 'include', // セッションを保持するためにクレデンシャルを含める
       headers: {
@@ -216,7 +219,8 @@ const handleImageError = (event: Event, item: CartItem) => {
 // 商品の数量を減らす
 const decreaseQuantity = async (id: number) => {
   try {
-    const response = await fetch('http://localhost:8000/api/cart/update_item/', {
+    const updateItemUrl = getApiUrl(env.CART_UPDATE_ITEM_URL)
+    const response = await fetch(updateItemUrl, {
       method: 'PUT',
       credentials: 'include', // セッションを保持するためにクレデンシャルを含める
       headers: {
@@ -246,7 +250,8 @@ const decreaseQuantity = async (id: number) => {
 // 商品を削除
 const removeItem = async (id: number) => {
   try {
-    const response = await fetch(`http://localhost:8000/api/cart/remove_item/?item_id=${id}`, {
+    const removeItemUrl = getApiUrl(`${env.CART_REMOVE_ITEM_URL}?item_id=${id}`)
+    const response = await fetch(removeItemUrl, {
       method: 'DELETE',
       credentials: 'include' // セッションを保持するためにクレデンシャルを含める
     })
@@ -273,7 +278,8 @@ const checkout = async () => {
     (window as any).showNotification('購入成功しました', 'success');
     
     // APIを呼び出してカートを空にする
-    const response = await fetch('http://localhost:8000/api/cart/clear/', {
+    const clearCartUrl = getApiUrl(env.CART_CLEAR_URL)
+    const response = await fetch(clearCartUrl, {
       method: 'DELETE',
       credentials: 'include' // セッションを保持するためにクレデンシャルを含める
     })

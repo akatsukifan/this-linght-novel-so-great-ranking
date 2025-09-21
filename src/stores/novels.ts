@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { getApiUrl, env } from '../config/env'
 
 // 小説データの型を定義
 interface Novel {
@@ -75,7 +76,8 @@ export const useNovelsStore = defineStore('novels', {
       this.yearlyNovels[targetYear].error = null
       
       try {
-        const response = await fetch(`http://localhost:8000/api/novels/?year=${targetYear}`)
+        const novelsUrl = getApiUrl(`${env.NOVELS_URL}?year=${targetYear}`)
+        const response = await fetch(novelsUrl)
         if (!response.ok) {
           throw new Error('小説の取得に失敗しました')
         }
@@ -143,6 +145,21 @@ export const useNovelsStore = defineStore('novels', {
       return []
     },
     
+    async getNovelDetail(novelId: number) {
+      try {
+        const novelDetailUrl = getApiUrl(`${env.NOVELS_URL}${novelId}/`)
+        const response = await fetch(novelDetailUrl)
+        if (!response.ok) {
+          throw new Error('小説の詳細の取得に失敗しました')
+        }
+        const data = await response.json()
+        return data
+      } catch (err) {
+        console.error('小説の詳細の取得に失敗:', err)
+        throw err
+      }
+    },
+    
     async addToCart(novelId: number) {
       try {
         // CSRFトークンを取得
@@ -156,7 +173,8 @@ export const useNovelsStore = defineStore('novels', {
         
         const csrftoken = getCookie('csrftoken');
         
-        const response = await fetch('http://localhost:8000/api/cart/add_item/', {
+        const addItemUrl = getApiUrl(env.CART_ADD_ITEM_URL)
+        const response = await fetch(addItemUrl, {
           method: 'POST',
           credentials: 'include',
           headers: {

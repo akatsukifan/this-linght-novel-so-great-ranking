@@ -1,0 +1,14 @@
+Django==4.2.24
+Django==4.2.24
+
+# REST Framework and CORS
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+
+# WSGI Server
+gunicorn==21.2.0
+
+# Database (SQLite is default, no additional driver needed)
+
+# Production tools
+python-dotenv>=1.0.0  # For environment variables management

@@ -8,6 +8,7 @@ from .serializers import NovelSerializer, CartSerializer, CartItemSerializer
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.contrib.auth import authenticate, login, logout
+from django.utils import timezone
 from django.contrib.auth.models import User
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
@@ -137,6 +138,17 @@ class AuthViewSet(viewsets.ViewSet):
     def logout(self, request):
         """用户登出API"""
         try:
+            # 如果用户已登录，获取并清空购物车
+            if request.user.is_authenticated:
+                try:
+                    # 获取用户的购物车
+                    cart = Cart.objects.get(user=request.user)
+                    # 清空购物车
+                    cart.items.all().delete()
+                except Cart.DoesNotExist:
+                    # 如果购物车不存在，忽略
+                    pass
+            
             # 登出用户
             logout(request)
             
@@ -155,6 +167,17 @@ class AuthViewSet(viewsets.ViewSet):
     def logout_get(self, request):
         """使用GET方法的登出API，方便测试"""
         try:
+            # 如果用户已登录，获取并清空购物车
+            if request.user.is_authenticated:
+                try:
+                    # 获取用户的购物车
+                    cart = Cart.objects.get(user=request.user)
+                    # 清空购物车
+                    cart.items.all().delete()
+                except Cart.DoesNotExist:
+                    # 如果购物车不存在，忽略
+                    pass
+            
             # 登出用户
             logout(request)
             
@@ -191,6 +214,9 @@ class CartViewSet(viewsets.ViewSet):
     # 临时禁用CSRF保护以解决添加购物车问题
     authentication_classes = []
     
+    # 设置购物车保留策略：False表示用户会话结束后不保留购物车内容
+    PERSIST_CART_AFTER_SESSION = False
+    
     def get_cart(self, request):
         """获取当前用户的购物车，如果不存在则创建"""
         # 检查用户是否已登录
@@ -203,7 +229,34 @@ class CartViewSet(viewsets.ViewSet):
             if not session_key:
                 request.session.save()
                 session_key = request.session.session_key
-            cart, created = Cart.objects.get_or_create(session_key=session_key)
+                
+            # 检查购物车是否存在
+            try:
+                cart = Cart.objects.get(session_key=session_key)
+                
+                # 如果不希望在会话结束后保留购物车内容，检查上次活动时间
+                if not self.PERSIST_CART_AFTER_SESSION:
+                    # 获取当前时间
+                    current_time = timezone.now()
+                    # 检查会话是否包含上次活动时间
+                    last_activity = request.session.get('last_cart_activity')
+                    
+                    if last_activity:
+                        # 转换为datetime对象
+                        last_activity_time = timezone.datetime.fromisoformat(last_activity)
+                        # 检查是否超过30分钟（1800秒）没有活动
+                        time_diff = (current_time - last_activity_time).total_seconds()
+                        if time_diff > 1800:  # 30分钟
+                            # 清空购物车
+                            cart.items.all().delete()
+                
+                # 更新会话中的最后活动时间
+                request.session['last_cart_activity'] = timezone.now().isoformat()
+            except Cart.DoesNotExist:
+                # 如果购物车不存在，创建新的
+                cart = Cart.objects.create(session_key=session_key)
+                # 设置初始活动时间
+                request.session['last_cart_activity'] = timezone.now().isoformat()
         return cart
     
     def list(self, request):

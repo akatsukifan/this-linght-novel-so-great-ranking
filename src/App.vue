@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getApiUrl, env } from './config/env'
 
 const router = useRouter()
 
@@ -13,7 +14,8 @@ const cartItemCount = ref<number>(0)
 // バックエンドからカートの実際の商品数を取得
 const fetchCartItemCount = async () => {
   try {
-    const response = await fetch('http://localhost:8000/api/cart/', {
+    const cartUrl = getApiUrl(env.CART_URL)
+    const response = await fetch(cartUrl, {
       credentials: 'include' // セッションを維持するためにクレデンシャルを含める
     })
     
@@ -57,7 +59,8 @@ const handleLogin = () => {
 const handleLogout = async () => {
   try {
     // バックエンドのログアウトAPIを呼び出す
-    await fetch('http://localhost:8000/api/logout/', {
+    const logoutUrl = getApiUrl(env.LOGOUT_URL)
+    await fetch(logoutUrl, {
       method: 'POST',
       credentials: 'include'
     })

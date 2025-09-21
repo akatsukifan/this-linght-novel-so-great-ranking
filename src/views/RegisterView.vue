@@ -66,6 +66,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getApiUrl, env } from '../config/env'
 
 const router = useRouter()
 
@@ -104,9 +105,9 @@ const handleRegister = async () => {
     // ローディング状態を設定
     isLoading.value = true
     
-    // axiosの設定問題を回避するため、fetch APIを使用して登録リクエストを送信
-    const absoluteUrl = 'http://localhost:8000/api/auth/register/'
-    console.log('fetch APIを使用してリクエストを送信:', absoluteUrl)
+    // 使用环境配置中的API地址
+    const registerUrl = getApiUrl(env.REGISTER_URL)
+    console.log('fetch APIを使用してリクエストを送信:', registerUrl)
     
     // リクエストパラメータを準備
     const requestOptions: RequestInit = {
@@ -119,13 +120,13 @@ const handleRegister = async () => {
     }
     
     // fetchリクエストを送信
-    const response = await fetch(absoluteUrl, requestOptions)
+    const response = await fetch(registerUrl, requestOptions)
     
     // レスポンスデータを取得
     const responseData = await response.json()
     
     // 成功レスポンスを処理
-    console.log('リクエストが正常に送信されました:', absoluteUrl)
+    console.log('リクエストが正常に送信されました:', registerUrl)
     console.log('レスポンスステータス:', response.status)
     console.log('レスポンスデータ:', responseData)
     

@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getApiUrl, env } from '../config/env'
 
 const router = useRouter()
 
@@ -84,9 +85,9 @@ const handleLogin = async () => {
     // ローディング状態を設定
     isLoading.value = true
     
-    // axiosの設定問題を回避するため、fetch APIを使用してログインリクエストを送信
-    const absoluteUrl = 'http://localhost:8000/api/auth/login/'
-    console.log('fetch APIを使用してリクエストを送信:', absoluteUrl)
+    // 使用环境配置中的API地址
+    const loginUrl = getApiUrl(env.LOGIN_URL)
+    console.log('fetch APIを使用してリクエストを送信:', loginUrl)
     
     // リクエストパラメータを準備
     const requestOptions: RequestInit = {
@@ -103,13 +104,13 @@ const handleLogin = async () => {
     }
     
     // fetchリクエストを送信
-    const response: Response = await fetch(absoluteUrl, requestOptions)
+    const response: Response = await fetch(loginUrl, requestOptions)
     
     // レスポンスデータを取得
     const responseData: any = await response.json()
     
     // 成功レスポンスを処理
-    console.log('リクエストが正常に送信されました:', absoluteUrl)
+    console.log('リクエストが正常に送信されました:', loginUrl)
     console.log('レスポンスステータス:', response.status)
     console.log('レスポンスデータ:', responseData)
     
