@@ -15,67 +15,67 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import action
 
 class NovelViewSet(viewsets.ReadOnlyModelViewSet):
-    """小说视图集，用于获取小说列表和详情"""
+    """小説ビューセット、小説リストと詳細を取得するために使用"""
     queryset = Novel.objects.all().order_by('rank')
     serializer_class = NovelSerializer
     permission_classes = [AllowAny]
     
     def get_queryset(self):
-        """根据年份参数过滤小说列表"""
+        """年パラメータによって小説リストをフィルタリング"""
         queryset = super().get_queryset()
         year = self.request.query_params.get('year')
         if year:
-            # 根据年份字段过滤小说
+            # 年フィールドによって小説をフィルタリング
             queryset = queryset.filter(year=year)
         return queryset
 
 class AuthViewSet(viewsets.ViewSet):
-    """用户认证视图集，处理登录、登出和注册操作"""
+    """ユーザー認証ビューセット、ログイン、ログアウト、登録操作を処理"""
     permission_classes = [AllowAny]
-    # 禁用CSRF保护
+    # CSRF保護を無効にする
     authentication_classes = []
     
     @action(detail=False, methods=['post'])
     def register(self, request):
-        """用户注册API"""
+        """ユーザー登録API"""
         try:
             username = request.data.get('username')
             email = request.data.get('email')
             password = request.data.get('password')
             confirm_password = request.data.get('confirm_password')
             
-            # 验证必要字段
+            # 必須フィールドを検証
             if not username or not email or not password or not confirm_password:
-                return Response({'error': '所有字段都是必填的'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'すべてのフィールドは必須です'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 验证密码是否匹配
+            # パスワードが一致するか検証
             if password != confirm_password:
-                return Response({'error': '两次输入的密码不匹配'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': '入力したパスワードが一致しません'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 验证密码长度
+            # パスワードの長さを検証
             if len(password) < 6:
-                return Response({'error': '密码长度至少为6位'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'パスワードの長さは少なくとも6文字必要です'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 检查用户名是否已存在
+            # ユーザー名が既に存在するか確認
             if User.objects.filter(username=username).exists():
-                return Response({'error': '用户名已存在'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'ユーザー名は既に存在します'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 检查邮箱是否已被使用
+            # メールアドレスが既に使用されているか確認
             if User.objects.filter(email=email).exists():
-                return Response({'error': '邮箱已被使用'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'メールアドレスは既に使用されています'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 创建新用户
+            # 新しいユーザーを作成
             user = User.objects.create_user(
                 username=username,
                 email=email,
                 password=password
             )
             
-            # 登录新用户
+            # 新しいユーザーをログインさせる
             login(request, user)
             
             return Response(
-                {'success': True, 'message': '注册成功', 'user_id': user.id},
+                {'success': True, 'message': '登録が成功しました', 'user_id': user.id},
                 status=status.HTTP_201_CREATED
             )
             
@@ -87,25 +87,25 @@ class AuthViewSet(viewsets.ViewSet):
             
     @action(detail=False, methods=['post'])
     def login(self, request):
-        """用户登录API"""
+        """ユーザーログインAPI"""
         try:
             username = request.data.get('username')
             password = request.data.get('password')
             
             if not username or not password:
                 return Response(
-                    {'error': '用户名和密码不能为空'}, 
+                    {'error': 'ユーザー名とパスワードは必須です'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # 验证用户凭据
+            # ユーザーの認証情報を検証
             user = authenticate(username=username, password=password)
             
             if user is not None:
-                # 登录用户
+                # ユーザーをログインさせる
                 login(request, user)
                 
-                # 返回用户信息
+                # ユーザー情報を返す
                 user_data = {
                     'id': user.id,
                     'username': user.username,
@@ -118,42 +118,42 @@ class AuthViewSet(viewsets.ViewSet):
                     {
                         'success': True,
                         'user': user_data,
-                        'message': '登录成功'
-                    }, 
+                        'message': 'ログインが成功しました'
+                    },
                     status=status.HTTP_200_OK
                 )
             else:
                 return Response(
-                    {'error': '用户名或密码错误'}, 
+                    {'error': 'ユーザー名またはパスワードが間違っています'},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
         except Exception as e:
             return Response(
-                {'error': str(e)}, 
+                {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
     @action(detail=False, methods=['post'])
     def logout(self, request):
-        """用户登出API"""
+        """ユーザーログアウトAPI"""
         try:
-            # 如果用户已登录，获取并清空购物车
+            # ユーザーがログインしている場合、カートを取得して空にする
             if request.user.is_authenticated:
                 try:
-                    # 获取用户的购物车
+                    # ユーザーのカートを取得
                     cart = Cart.objects.get(user=request.user)
-                    # 清空购物车
+                    # カートを空にする
                     cart.items.all().delete()
                 except Cart.DoesNotExist:
-                    # 如果购物车不存在，忽略
+                    # カートが存在しない場合は無視
                     pass
             
-            # 登出用户
+            # ユーザーをログアウトさせる
             logout(request)
             
             return Response(
-                {'success': True, 'message': '登出成功'},
+                {'success': True, 'message': 'ログアウトが成功しました'},
                 status=status.HTTP_200_OK
             )
             
@@ -165,24 +165,24 @@ class AuthViewSet(viewsets.ViewSet):
             
     @action(detail=False, methods=['get'])
     def logout_get(self, request):
-        """使用GET方法的登出API，方便测试"""
+        """テスト用のGETメソッドを使用したログアウトAPI"""
         try:
-            # 如果用户已登录，获取并清空购物车
+            # ユーザーがログインしている場合、カートを取得して空にする
             if request.user.is_authenticated:
                 try:
-                    # 获取用户的购物车
+                    # ユーザーのカートを取得
                     cart = Cart.objects.get(user=request.user)
-                    # 清空购物车
+                    # カートを空にする
                     cart.items.all().delete()
                 except Cart.DoesNotExist:
-                    # 如果购物车不存在，忽略
+                    # カートが存在しない場合は無視
                     pass
             
-            # 登出用户
+            # ユーザーをログアウトさせる
             logout(request)
             
             return Response(
-                {'success': True, 'message': '登出成功'},
+                {'success': True, 'message': 'ログアウトが成功しました'},
                 status=status.HTTP_200_OK
             )
             
@@ -194,7 +194,7 @@ class AuthViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def current_user(self, request):
-        """获取当前登录用户信息API"""
+        """現在ログイン中のユーザー情報を取得するAPI"""
         if request.user.is_authenticated:
             user = request.user
             user_data = {
@@ -206,61 +206,61 @@ class AuthViewSet(viewsets.ViewSet):
             }
             return Response(user_data, status=status.HTTP_200_OK)
         else:
-            return Response({'error': '未登录'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'ログインしていません'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class CartViewSet(viewsets.ViewSet):
-    """购物车视图集，用于处理购物车的各种操作"""
+    """カートビューセット、カートの様々な操作を処理するために使用"""
     permission_classes = [AllowAny]
-    # 临时禁用CSRF保护以解决添加购物车问题
+    # カート追加の問題を解決するために一時的にCSRF保護を無効にする
     authentication_classes = []
     
-    # 设置购物车保留策略：False表示用户会话结束后不保留购物车内容
+    # カートの保持戦略を設定：Falseはセッション終了後にカートの内容を保持しないことを意味する
     PERSIST_CART_AFTER_SESSION = False
     
     def get_cart(self, request):
-        """获取当前用户的购物车，如果不存在则创建"""
-        # 检查用户是否已登录
+        """現在のユーザーのカートを取得し、存在しない場合は作成する"""
+        # ユーザーがログインしているか確認
         if request.user.is_authenticated:
-            # 如果用户已登录，获取或创建与用户关联的购物车
+            # ユーザーがログインしている場合、ユーザーに関連するカートを取得または作成
             cart, created = Cart.objects.get_or_create(user=request.user)
         else:
-            # 如果用户未登录，使用session_key获取或创建购物车
+            # ユーザーがログインしていない場合、session_keyを使用してカートを取得または作成
             session_key = request.session.session_key
             if not session_key:
                 request.session.save()
                 session_key = request.session.session_key
                 
-            # 检查购物车是否存在
+            # カートが存在するか確認
             try:
                 cart = Cart.objects.get(session_key=session_key)
                 
-                # 如果不希望在会话结束后保留购物车内容，检查上次活动时间
+                # セッション終了後にカートの内容を保持したくない場合、最終アクティビティ時間を確認
                 if not self.PERSIST_CART_AFTER_SESSION:
-                    # 获取当前时间
+                    # 現在の時間を取得
                     current_time = timezone.now()
-                    # 检查会话是否包含上次活动时间
+                    # セッションに最終アクティビティ時間が含まれているか確認
                     last_activity = request.session.get('last_cart_activity')
                     
                     if last_activity:
-                        # 转换为datetime对象
+                        # datetimeオブジェクトに変換
                         last_activity_time = timezone.datetime.fromisoformat(last_activity)
-                        # 检查是否超过30分钟（1800秒）没有活动
+                        # 30分間（1800秒）アクティビティがないか確認
                         time_diff = (current_time - last_activity_time).total_seconds()
-                        if time_diff > 1800:  # 30分钟
-                            # 清空购物车
+                        if time_diff > 1800:  # 30分
+                            # カートを空にする
                             cart.items.all().delete()
                 
-                # 更新会话中的最后活动时间
+                # セッション内の最終アクティビティ時間を更新
                 request.session['last_cart_activity'] = timezone.now().isoformat()
             except Cart.DoesNotExist:
-                # 如果购物车不存在，创建新的
+                # カートが存在しない場合、新しいカートを作成
                 cart = Cart.objects.create(session_key=session_key)
-                # 设置初始活动时间
+                # 初期アクティビティ時間を設定
                 request.session['last_cart_activity'] = timezone.now().isoformat()
         return cart
     
     def list(self, request):
-        """查看购物车内容"""
+        """カートの内容を表示"""
         cart = self.get_cart(request)
         serializer = CartSerializer(cart)
         return Response(serializer.data)
@@ -271,43 +271,43 @@ class CartViewSet(viewsets.ViewSet):
     @method_decorator(csrf_exempt)
     @action(detail=False, methods=['post'])
     def add_item(self, request):
-        """添加商品到购物车"""
+        """商品をカートに追加"""
         try:
             novel_id = request.data.get('novel_id')
             quantity = request.data.get('quantity', 1)
             
             if not novel_id:
-                return Response({'error': '小说ID不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': '小説IDは必須です'}, status=status.HTTP_400_BAD_REQUEST)
             
             try:
                 quantity = int(quantity)
                 if quantity <= 0:
-                    return Response({'error': '数量必须大于0'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': '数量は0より大きくなければなりません'}, status=status.HTTP_400_BAD_REQUEST)
             except ValueError:
-                return Response({'error': '数量必须是整数'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': '数量は整数でなければなりません'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 获取购物车
+            # カートを取得
             cart = self.get_cart(request)
             
-            # 获取小说对象
+            # 小説オブジェクトを取得
             try:
                 novel = Novel.objects.get(id=novel_id)
             except Novel.DoesNotExist:
-                return Response({'error': '小说不存在'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': '小説が存在しません'}, status=status.HTTP_404_NOT_FOUND)
             
-            # 检查购物车中是否已存在该商品
+            # カートにすでにその商品が存在するか確認
             cart_item, created = CartItem.objects.get_or_create(cart=cart, novel=novel)
             
-            # 如果商品已存在，则增加数量
+            # 商品が既に存在する場合は数量を増やす
             if not created:
                 cart_item.quantity += quantity
                 cart_item.save()
             else:
-                # 如果是新商品，则设置数量
+                # 新しい商品の場合は数量を設定
                 cart_item.quantity = quantity
                 cart_item.save()
             
-            # 返回更新后的购物车
+            # 更新されたカートを返す
             serializer = CartSerializer(cart)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             
@@ -316,45 +316,45 @@ class CartViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['put'])
     def update_item(self, request):
-        """更新购物车中商品的数量"""
+        """カート内の商品の数量を更新"""
         try:
             item_id = request.data.get('item_id')
             quantity = request.data.get('quantity')
             
             if not item_id or not quantity:
-                return Response({'error': '商品ID和数量不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': '商品IDと数量は必須です'}, status=status.HTTP_400_BAD_REQUEST)
             
             try:
                 quantity = int(quantity)
-                # 允许负数用于减少数量
+                # 数量を減らすために負の数を許可
                 if quantity == 0:
-                    return Response({'error': '数量不能为0'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': '数量は0にすることができません'}, status=status.HTTP_400_BAD_REQUEST)
             except ValueError:
-                return Response({'error': '数量必须是整数'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': '数量は整数でなければなりません'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 获取购物车
+            # カートを取得
             cart = self.get_cart(request)
             
-            # 获取购物车项目
+            # カートアイテムを取得
             try:
                 cart_item = CartItem.objects.get(id=item_id, cart=cart)
             except CartItem.DoesNotExist:
-                return Response({'error': '购物车项目不存在'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'カートアイテムが存在しません'}, status=status.HTTP_404_NOT_FOUND)
             
-            # 更新数量
-            # 如果是正数，则增加数量；如果是负数，则减少数量
+            # 数量を更新
+            # 正数の場合は数量を増やし、負数の場合は数量を減らす
             new_quantity = cart_item.quantity + quantity
             
-            # 确保数量不小于1
+            # 数量が1以上であることを確認
             if new_quantity <= 0:
-                # 如果数量小于等于0，则删除该商品
+                # 数量が0以下の場合は商品を削除
                 cart_item.delete()
             else:
-                # 否则更新数量
+                # それ以外の場合は数量を更新
                 cart_item.quantity = new_quantity
                 cart_item.save()
             
-            # 返回更新后的购物车
+            # 更新されたカートを返す
             serializer = CartSerializer(cart)
             return Response(serializer.data)
             
@@ -363,24 +363,24 @@ class CartViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['delete'])
     def remove_item(self, request):
-        """从购物车中删除商品"""
+        """カートから商品を削除"""
         try:
             item_id = request.query_params.get('item_id')
             
             if not item_id:
-                return Response({'error': '商品ID不能为空'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': '商品IDは必須です'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # 获取购物车
+            # カートを取得
             cart = self.get_cart(request)
             
-            # 获取购物车项目并删除
+            # カートアイテムを取得して削除
             try:
                 cart_item = CartItem.objects.get(id=item_id, cart=cart)
                 cart_item.delete()
             except CartItem.DoesNotExist:
-                return Response({'error': '购物车项目不存在'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'error': 'カートアイテムが存在しません'}, status=status.HTTP_404_NOT_FOUND)
             
-            # 返回更新后的购物车
+            # 更新されたカートを返す
             serializer = CartSerializer(cart)
             return Response(serializer.data)
             
@@ -389,15 +389,15 @@ class CartViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['delete'])
     def clear(self, request):
-        """清空购物车"""
+        """カートを空にする"""
         try:
-            # 获取购物车
+            # カートを取得
             cart = self.get_cart(request)
             
-            # 删除购物车中的所有商品
+            # カート内のすべての商品を削除
             cart.items.all().delete()
             
-            # 返回更新后的购物车
+            # 更新されたカートを返す
             serializer = CartSerializer(cart)
             return Response(serializer.data)
             

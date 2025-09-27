@@ -120,7 +120,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-# 静态文件收集目录，用于生产环境
+# 静的ファイル収集ディレクトリ、本番環境で使用
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
